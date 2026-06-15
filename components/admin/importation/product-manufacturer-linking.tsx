@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AlertCircle, Link2, Unlink2 } from "lucide-react"
+import { AlertCircle, Link2, Unlink2, Info } from "lucide-react"
 import { toast } from "sonner"
 
 interface Product {
@@ -43,6 +43,15 @@ interface ProductManufacturerLinkingProps {
   refreshTrigger: number
 }
 
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "")
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return `rgba(15, 118, 110, ${alpha})`
+  const r = Number.parseInt(normalized.slice(0, 2), 16)
+  const g = Number.parseInt(normalized.slice(2, 4), 16)
+  const b = Number.parseInt(normalized.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export default function ProductManufacturerLinking({
   branding,
   refreshTrigger,
@@ -56,6 +65,8 @@ export default function ProductManufacturerLinking({
   const [linkedProducts, setLinkedProducts] = useState<Product[]>([])
 
   const token = getToken()
+  const primaryColor = branding?.primaryColor || "#0f766e"
+  const primarySoftColor = hexToRgba(primaryColor, 0.08)
 
   useEffect(() => {
     fetchData()
@@ -77,10 +88,10 @@ export default function ProductManufacturerLinking({
       const sourcesData = await parseResponse(sourcesRes)
 
       setProducts(
-        Array.isArray(productsData) ? productsData : productsData.data || []
+        Array.isArray(productsData) ? productsData : (productsData?.data || [])
       )
       setSources(
-        Array.isArray(sourcesData) ? sourcesData : sourcesData.data || []
+        Array.isArray(sourcesData) ? sourcesData : (sourcesData?.data || [])
       )
     } catch (error) {
       console.error("Error fetching data:", error)
@@ -100,7 +111,7 @@ export default function ProductManufacturerLinking({
       const response = await fetch(`${API_URL}/importation/link-product`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -116,7 +127,7 @@ export default function ProductManufacturerLinking({
         setSelectedManufacturer("")
         fetchData()
       } else {
-        toast.error(data.error || "Failed to link product")
+        toast.error(data?.error || "Failed to link product")
       }
     } catch (error) {
       console.error("Error linking product:", error)
@@ -131,7 +142,7 @@ export default function ProductManufacturerLinking({
       const response = await fetch(`${API_URL}/importation/unlink-product`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -164,7 +175,7 @@ export default function ProductManufacturerLinking({
         }
       )
       const data = await parseResponse(response)
-      setLinkedProducts(Array.isArray(data) ? data : data.data || [])
+      setLinkedProducts(Array.isArray(data) ? data : (data?.data || []))
       setLinkedDialogOpen(true)
     } catch (error) {
       console.error("Error fetching linked products:", error)
@@ -175,20 +186,35 @@ export default function ProductManufacturerLinking({
   const selectedManufacturerData = sources.find(
     (s) => s._id === selectedManufacturer
   )
+  const manufacturersOnly = sources.filter((s) => s.sourceType === "MANUFACTURER")
 
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader style={{ backgroundColor: primarySoftColor }}>
           <CardTitle>Link Products to Manufacturers</CardTitle>
           <CardDescription>
             Select a product and manufacturer to create a link between them
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <p className="text-gray-600">Loading...</p>
+            </div>
+          ) : manufacturersOnly.length === 0 ? (
+            <div style={{ backgroundColor: primarySoftColor }} className="p-4 rounded-lg border border-current">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: primaryColor }} />
+                <p className="text-sm">No manufacturers created yet. Please create a manufacturer in the Source Management tab first.</p>
+              </div>
+            </div>
+          ) : products.length === 0 ? (
+            <div style={{ backgroundColor: primarySoftColor }} className="p-4 rounded-lg border border-current">
+              <div className="flex gap-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: primaryColor }} />
+                <p className="text-sm">No products available. Please create products in the Inventory Manager first.</p>
+              </div>
             </div>
           ) : (
             <>
@@ -225,13 +251,11 @@ export default function ProductManufacturerLinking({
                       <SelectValue placeholder="Choose a manufacturer..." />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {sources
-                        .filter((s) => s.sourceType === "MANUFACTURER")
-                        .map((source) => (
-                          <SelectItem key={source._id} value={source._id}>
-                            {source.companyName}
-                          </SelectItem>
-                        ))}
+                      {manufacturersOnly.map((source) => (
+                        <SelectItem key={source._id} value={source._id}>
+                          {source.companyName}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -241,9 +265,9 @@ export default function ProductManufacturerLinking({
                   <Button
                     onClick={handleLinkProduct}
                     style={{
-                      backgroundColor: branding?.primaryColor || "#2563eb",
+                      backgroundColor: primaryColor,
                     }}
-                    className="w-full text-white"
+                    className="w-full text-white hover:opacity-90"
                   >
                     <Link2 className="w-4 h-4 mr-2" />
                     Link Product
@@ -253,11 +277,12 @@ export default function ProductManufacturerLinking({
 
               {/* View Linked Products Button */}
               {selectedManufacturer && (
-                <div className="pt-4">
+                <div className="pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={() => fetchLinkedProducts(selectedManufacturer)}
                     className="w-full"
+                    style={{ borderColor: primaryColor, color: primaryColor }}
                   >
                     View Linked Products for {selectedManufacturerData?.companyName}
                   </Button>
@@ -286,10 +311,10 @@ export default function ProductManufacturerLinking({
               </div>
             ) : (
               linkedProducts.map((product) => (
-                <Card key={product._id}>
-                  <CardContent className="flex items-center justify-between pt-4">
-                    <div className="flex-1">
-                      <p className="font-medium">{product.name}</p>
+                <Card key={product._id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pt-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{product.name}</p>
                       <p className="text-sm text-gray-600">
                         Category: {product.category || "N/A"}
                       </p>
@@ -301,6 +326,7 @@ export default function ProductManufacturerLinking({
                       variant="destructive"
                       size="sm"
                       onClick={() => handleUnlinkProduct(product._id)}
+                      className="flex-shrink-0"
                     >
                       <Unlink2 className="w-4 h-4 mr-2" />
                       Unlink
@@ -314,25 +340,28 @@ export default function ProductManufacturerLinking({
       </Dialog>
 
       {/* Info Section */}
-      <Card>
+      <Card style={{ backgroundColor: primarySoftColor }}>
         <CardHeader>
-          <CardTitle className="text-base">How to Use</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Info className="w-5 h-5" />
+            How to Use
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2 text-sm text-gray-600">
+        <CardContent className="space-y-2 text-sm text-gray-700">
           <p>
-            1. Select a product from the "Select Product" dropdown
+            <span className="font-medium">1. Select a product:</span> Choose from the "Select Product" dropdown
           </p>
           <p>
-            2. Choose a manufacturer from the "Select Manufacturer" dropdown
+            <span className="font-medium">2. Choose a manufacturer:</span> Pick a manufacturer from the "Select Manufacturer" dropdown
           </p>
           <p>
-            3. Click "Link Product" to create the association
+            <span className="font-medium">3. Link the product:</span> Click "Link Product" to create the association
           </p>
           <p>
-            4. Use "View Linked Products" to see all products linked to a manufacturer
+            <span className="font-medium">4. View linked products:</span> Use "View Linked Products" to see all products linked to a manufacturer
           </p>
           <p>
-            5. Click "Unlink" to remove the association between a product and manufacturer
+            <span className="font-medium">5. Unlink if needed:</span> Click "Unlink" to remove the association between a product and manufacturer
           </p>
         </CardContent>
       </Card>

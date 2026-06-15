@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Edit2, Trash2, AlertCircle } from "lucide-react"
+import { Plus, Edit2, Trash2, AlertCircle, Factory, Truck } from "lucide-react"
 import { toast } from "sonner"
 
 interface ImportationSource {
@@ -29,6 +29,15 @@ interface SourceManagerProps {
   onRefresh: () => void
 }
 
+function hexToRgba(hex: string, alpha: number) {
+  const normalized = hex.replace("#", "")
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return `rgba(15, 118, 110, ${alpha})`
+  const r = Number.parseInt(normalized.slice(0, 2), 16)
+  const g = Number.parseInt(normalized.slice(2, 4), 16)
+  const b = Number.parseInt(normalized.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 export default function SourceManager({ branding, refreshTrigger, onRefresh }: SourceManagerProps) {
   const [sources, setSources] = useState<ImportationSource[]>([])
   const [loading, setLoading] = useState(false)
@@ -44,6 +53,8 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
   })
 
   const token = getToken()
+  const primaryColor = branding?.primaryColor || "#0f766e"
+  const primarySoftColor = hexToRgba(primaryColor, 0.08)
 
   const fetchSources = async () => {
     setLoading(true)
@@ -161,8 +172,8 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
         <DialogTrigger asChild>
           <Button
             onClick={() => resetForm()}
-            style={{ backgroundColor: branding?.primaryColor || "#2563eb" }}
-            className="text-white hover:opacity-90"
+            style={{ backgroundColor: primaryColor }}
+            className="text-white hover:opacity-90 w-full sm:w-auto"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Source
@@ -187,11 +198,12 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
                   onClick={() => setSourceType("MANUFACTURER")}
                   style={
                     sourceType === "MANUFACTURER"
-                      ? { backgroundColor: branding?.primaryColor || "#2563eb" }
+                      ? { backgroundColor: primaryColor }
                       : {}
                   }
-                  className={sourceType === "MANUFACTURER" ? "text-white" : ""}
+                  className={`flex-1 ${sourceType === "MANUFACTURER" ? "text-white" : ""}`}
                 >
+                  <Factory className="w-4 h-4 mr-2" />
                   Manufacturer
                 </Button>
                 <Button
@@ -200,11 +212,12 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
                   onClick={() => setSourceType("SUPPLIER")}
                   style={
                     sourceType === "SUPPLIER"
-                      ? { backgroundColor: branding?.primaryColor || "#2563eb" }
+                      ? { backgroundColor: primaryColor }
                       : {}
                   }
-                  className={sourceType === "SUPPLIER" ? "text-white" : ""}
+                  className={`flex-1 ${sourceType === "SUPPLIER" ? "text-white" : ""}`}
                 >
+                  <Truck className="w-4 h-4 mr-2" />
                   Supplier
                 </Button>
               </div>
@@ -276,8 +289,8 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
               </Button>
               <Button
                 type="submit"
-                style={{ backgroundColor: branding?.primaryColor || "#2563eb" }}
-                className="text-white"
+                style={{ backgroundColor: primaryColor }}
+                className="text-white hover:opacity-90"
               >
                 {editingId ? "Update Source" : "Create Source"}
               </Button>
@@ -296,7 +309,7 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
             </CardContent>
           </Card>
         ) : sources.length === 0 ? (
-          <Card>
+          <Card style={{ backgroundColor: primarySoftColor }}>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <AlertCircle className="w-12 h-12 text-gray-400 mb-3" />
               <p className="text-gray-600">No sources added yet</p>
@@ -306,17 +319,17 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {sources.map((source) => (
-              <Card key={source._id}>
-                <CardHeader>
+              <Card key={source._id} className="hover:shadow-lg transition-shadow">
+                <CardHeader style={{ backgroundColor: primarySoftColor }}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="text-base">{source.companyName}</CardTitle>
                       <CardDescription>
                         <span
                           className="inline-block px-2 py-1 rounded text-xs font-medium text-white mt-1"
-                          style={{ backgroundColor: branding?.primaryColor || "#2563eb" }}
+                          style={{ backgroundColor: primaryColor }}
                         >
-                          {source.sourceType}
+                          {source.sourceType === "MANUFACTURER" ? "🏭 Manufacturer" : "🚚 Supplier"}
                         </span>
                       </CardDescription>
                     </div>
@@ -338,7 +351,7 @@ export default function SourceManager({ branding, refreshTrigger, onRefresh }: S
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2 text-sm">
+                <CardContent className="space-y-2 text-sm pt-4">
                   <div>
                     <span className="font-medium">Location:</span> {source.location}
                   </div>

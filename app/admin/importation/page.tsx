@@ -18,7 +18,11 @@ export default function ImportationPage() {
           headers: { Authorization: `Bearer ${token}` },
         })
         const data = await parseResponse(response)
-        if (data.success) setBranding(data.data)
+        if (data?.success) {
+          setBranding(data.data)
+        } else if (data?.data) {
+          setBranding(data.data)
+        }
       } catch (error) {
         console.error("Error fetching branding:", error)
       } finally {
@@ -40,7 +44,7 @@ export default function ImportationPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight" style={{ color: branding?.primaryColor || "#2563eb" }}>
+        <h1 className="text-3xl font-bold tracking-tight" style={{ color: branding?.primaryColor || "#0f766e" }}>
           Importation Management
         </h1>
         <p className="text-gray-600">Manage manufacturers, suppliers, and product sourcing</p>
