@@ -57,6 +57,7 @@ import branchRoutes from "./routes/branch.routes"
 import aiAssistantRoutes from "./routes/aiAssistant.routes"
 import creditNoteRoutes from "./routes/creditNote.routes"
 import resourcesRoutes from "./routes/resources.routes"
+import importationRoutes from "./routes/importation.routes"
 import { JobController } from "./controllers/jobController"
 import { ApplicationFormController } from "./controllers/applicationFormController"
 import { MeetingController } from "./controllers/meetingController"
@@ -179,6 +180,7 @@ app.use("/api/setup", setupRoutes)
 app.use("/api/feedback-360", anonymousFeedbackRoutes)
 app.use("/api/feedback-surveys", feedbackSurveyRoutes)
 app.use("/api/stock", stockRoutes)
+app.use("/api/importation", importationRoutes)
 app.use("/api/stock/credit-notes", creditNoteRoutes)
 app.use("/api/stamps", stampRoutes)
 app.use("/api/resources", resourcesRoutes)

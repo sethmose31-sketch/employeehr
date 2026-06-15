@@ -30,7 +30,8 @@ import {
   Package,
   Stamp,
   ShieldCheck,
-  Clock3
+  Clock3,
+  Container
 } from "lucide-react"
 import { getUser, logout } from "@/lib/auth"
 import { getToken } from "@/lib/auth"
@@ -197,6 +198,12 @@ const adminMenuItems = [
     icon: Package,
     href: "/admin/stock/history",
     section: "INVENTORY MANAGER"
+  },
+  {
+    label: "Importation",
+    icon: Container,
+    href: "/admin/importation",
+    section: "IMPORTATION"
   },
   {
     label: "Posts",
